@@ -1,0 +1,70 @@
+# markdowns
+CLAUDE.md
+todo.md
+
+# Gradle
+.gradle/
+build/
+!gradle/wrapper/gradle-wrapper.jar
+!**/src/main/**/build/
+!**/src/test/**/build/
+
+# Gradle wrapper (kaynak kod olmayan büyük dosyalar hariç, script'ler dahil)
+gradle-app.setting
+!gradlew
+!gradlew.bat
+
+# IDE
+.idea/
+*.iml
+*.ipr
+*.iws
+.vscode/
+.settings/
+.project
+.classpath
+bin/
+out/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Environment / secrets
+.env
+.env.*
+*.pem
+*.key
+application-local.yml
+application-local.properties
+
+# Kubernetes / Helm
+**/charts/*.tgz
+**/.helm/
+kubeconfig
+*.kubeconfig
+
+# Skaffold
+.skaffold/
+
+# Kind/Minikube local state
+.kind/
+
+# Test / coverage
+*.hprof
+jacoco.exec
+coverage/
+
+# Docker
+*.tar
+
+# Compiled class files
+*.class
+
+# Temp
+*.tmp
+*.bak
