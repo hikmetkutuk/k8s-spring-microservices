@@ -1,11 +1,11 @@
 rootProject.name = "k8s-spring-microservices"
 
 include(
-    "common",
-    "auth-service",
-    "user-service",
-    "catalog-service",
-    "task-service",
-    "notification-service",
-    "api-gateway"
+    "libs:common",
+    "services:auth-service",
+    "services:user-service",
+    "services:catalog-service",
+    "services:task-service",
+    "services:notification-service",
+    "services:api-gateway"
 )
