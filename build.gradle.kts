@@ -2,7 +2,7 @@ plugins {
     id("java")
     id("org.springframework.boot") version "4.1.0" apply false
     id("io.spring.dependency-management") version "1.1.7" apply false
-    id("com.diffplug.spotless") version "6.25.0"
+    id("com.diffplug.spotless") version "8.8.0"
 }
 
 allprojects {
