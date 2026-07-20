@@ -1,1 +1,2 @@
 com.k8sspringmicroservices.common.autoconfigure.CommonExceptionHandlingAutoConfiguration
+com.k8sspringmicroservices.common.security.jwt.JwtSecurityAutoConfiguration

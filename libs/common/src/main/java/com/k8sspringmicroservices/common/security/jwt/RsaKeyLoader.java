@@ -1,4 +1,4 @@
-package com.k8sspringmicroservices.auth.config;
+package com.k8sspringmicroservices.common.security.jwt;
 
 import java.io.IOException;
 import java.io.InputStream;
