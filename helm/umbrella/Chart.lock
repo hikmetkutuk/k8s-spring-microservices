@@ -1,0 +1,21 @@
+dependencies:
+- name: auth-service
+  repository: file://../charts/auth-service
+  version: 0.1.0
+- name: user-service
+  repository: file://../charts/user-service
+  version: 0.1.0
+- name: catalog-service
+  repository: file://../charts/catalog-service
+  version: 0.1.0
+- name: task-service
+  repository: file://../charts/task-service
+  version: 0.1.0
+- name: notification-service
+  repository: file://../charts/notification-service
+  version: 0.1.0
+- name: api-gateway
+  repository: file://../charts/api-gateway
+  version: 0.1.0
+digest: sha256:b47cedd8b83eb8582bd434845c2ae024d24e14c5915c700a9cfb5de373fd67dc
+generated: "2026-07-22T15:44:00.30648+03:00"

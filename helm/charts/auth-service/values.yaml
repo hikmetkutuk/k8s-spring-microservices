@@ -1,0 +1,46 @@
+replicaCount: 1
+
+image:
+  repository: localhost:5000/auth-service
+  tag: "0.1.0-SNAPSHOT"
+  pullPolicy: IfNotPresent
+
+service:
+  port: 8081
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 256Mi
+  limits:
+    cpu: 500m
+    memory: 512Mi
+
+config:
+  DB_HOST: postgres
+  DB_PORT: "5432"
+  DB_NAME: auth_service
+  REDIS_HOST: redis
+  REDIS_PORT: "6379"
+  JWT_PRIVATE_KEY_LOCATION: file:/etc/jwt/private_key.pem
+  JWT_PUBLIC_KEY_LOCATION: file:/etc/jwt/public_key.pem
+  JWT_ACCESS_TOKEN_TTL_SECONDS: "900"
+  JWT_REFRESH_TOKEN_TTL_SECONDS: "604800"
+
+# Secret'a yazılacak hassas değerler. Varsayılan YOK — kurulumda
+# `--set secrets.dbUsername=... --set secrets.dbPassword=...` ile veya gitignore'lu
+# bir values dosyasıyla sağlanmalı (bkz. helm/README.md).
+secrets: {}
+
+# RS256 anahtar çifti. auth-service kendi jwt-keys Secret'ını üretir; diğer servisler
+# bu Secret'ın sadece public_key.pem alanını mount eder (bkz. todo.md madde 4.2).
+# Değerler generate-jwt-keys.sh çıktısından `--set-file jwtKeys.privateKey=... --set-file jwtKeys.publicKey=...`
+# ile sağlanmalı, repo'ya asla commit edilmemeli.
+jwtKeys:
+  secretName: jwt-keys
+  privateKey: ""
+  publicKey: ""
+
+podDisruptionBudget:
+  enabled: true
+  minAvailable: 1

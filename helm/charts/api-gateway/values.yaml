@@ -1,0 +1,36 @@
+replicaCount: 1
+
+image:
+  repository: localhost:5000/api-gateway
+  tag: "0.1.0-SNAPSHOT"
+  pullPolicy: IfNotPresent
+
+# Cluster dışına açılış (Ingress/LoadBalancer) madde 13'te (local K8s kurulumu) netleştirilecek;
+# şimdilik ClusterIP + port-forward ile erişilebilir.
+service:
+  port: 8080
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 256Mi
+  limits:
+    cpu: 500m
+    memory: 512Mi
+
+config:
+  REDIS_HOST: redis
+  REDIS_PORT: "6379"
+  JWT_PUBLIC_KEY_LOCATION: file:/etc/jwt/public_key.pem
+  AUTH_SERVICE_URL: http://auth-service:8081
+  USER_SERVICE_URL: http://user-service:8082
+  CATALOG_SERVICE_URL: http://catalog-service:8083
+  TASK_SERVICE_URL: http://task-service:8084
+  NOTIFICATION_SERVICE_URL: http://notification-service:8085
+
+jwt:
+  publicKeySecretName: jwt-keys
+
+podDisruptionBudget:
+  enabled: true
+  minAvailable: 1

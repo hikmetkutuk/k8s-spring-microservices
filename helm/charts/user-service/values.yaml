@@ -1,0 +1,34 @@
+replicaCount: 1
+
+image:
+  repository: localhost:5000/user-service
+  tag: "0.1.0-SNAPSHOT"
+  pullPolicy: IfNotPresent
+
+service:
+  port: 8082
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 256Mi
+  limits:
+    cpu: 500m
+    memory: 512Mi
+
+config:
+  DB_HOST: postgres
+  DB_PORT: "5432"
+  DB_NAME: user_service
+  JWT_PUBLIC_KEY_LOCATION: file:/etc/jwt/public_key.pem
+
+# Secret'a yazılacak hassas değerler. Varsayılan YOK — kurulumda
+# `--set secrets.dbUsername=... --set secrets.dbPassword=...` ile veya gitignore'lu
+# bir values dosyasıyla sağlanmalı (bkz. helm/README.md).
+secrets: {}
+
+jwt:
+  publicKeySecretName: jwt-keys
+
+podDisruptionBudget:
+  enabled: false

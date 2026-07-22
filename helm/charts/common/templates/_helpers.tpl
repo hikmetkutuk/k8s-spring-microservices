@@ -1,0 +1,19 @@
+{{/*
+K8s Service adları, Release adından bağımsız olarak sabit (sadece chart adı) tutulur;
+böylece servisler birbirine "http://catalog-service:8083" gibi öngörülebilir, release-name'e
+bağlı olmayan DNS adlarıyla erişebilir.
+*/}}
+{{- define "common.fullname" -}}
+{{- .Chart.Name -}}
+{{- end -}}
+
+{{- define "common.labels" -}}
+app.kubernetes.io/name: {{ .Chart.Name }}
+app.kubernetes.io/instance: {{ .Release.Name }}
+app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
+app.kubernetes.io/managed-by: {{ .Release.Service }}
+{{- end -}}
+
+{{- define "common.selectorLabels" -}}
+app.kubernetes.io/name: {{ .Chart.Name }}
+{{- end -}}

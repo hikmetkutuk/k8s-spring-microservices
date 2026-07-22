@@ -1,0 +1,10 @@
+apiVersion: v2
+name: api-gateway
+description: api-gateway Helm chart
+type: application
+version: 0.1.0
+appVersion: "0.1.0-SNAPSHOT"
+dependencies:
+  - name: common
+    version: 0.1.0
+    repository: "file://../common"

@@ -1,0 +1,13 @@
+# Bu dosya sadece alt chart'ların varsayılanlarını gösterir; hassas değerler
+# (secrets.*, jwtKeys.*) burada YOKTUR ve kurulum sırasında --set / --set-file ya da
+# gitignore'lu bir values dosyasıyla sağlanmalıdır. Detay için helm/README.md'ye bakın.
+#
+# Örnek:
+#   helm install platform . \
+#     --set auth-service.secrets.dbUsername=auth_service \
+#     --set auth-service.secrets.dbPassword=... \
+#     --set-file auth-service.jwtKeys.privateKey=../../services/auth-service/src/main/resources/keys/private_key.pem \
+#     --set-file auth-service.jwtKeys.publicKey=../../services/auth-service/src/main/resources/keys/public_key.pem \
+#     --set user-service.secrets.dbUsername=user_service \
+#     --set user-service.secrets.dbPassword=... \
+#     ... (catalog-service, task-service, notification-service için de aynı şekilde)

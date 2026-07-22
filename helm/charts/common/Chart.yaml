@@ -1,0 +1,5 @@
+apiVersion: v2
+name: common
+description: k8s-spring-microservices servisleri için paylaşılan Helm şablon yardımcıları
+type: library
+version: 0.1.0

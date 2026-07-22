@@ -1,0 +1,39 @@
+replicaCount: 1
+
+image:
+  repository: localhost:5000/catalog-service
+  tag: "0.1.0-SNAPSHOT"
+  pullPolicy: IfNotPresent
+
+service:
+  port: 8083
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 256Mi
+  limits:
+    cpu: 500m
+    memory: 512Mi
+
+# ConfigMap'e yazılacak, hassas olmayan config. Host değerleri local Kind cluster
+# varsayımıyla doldurulmuştur; madde 13'te kurulacak Postgres/Redis Helm release
+# adlarına göre `--set config.dbHost=...` ile override edilecek.
+config:
+  DB_HOST: postgres
+  DB_PORT: "5432"
+  DB_NAME: catalog_service
+  REDIS_HOST: redis
+  REDIS_PORT: "6379"
+  JWT_PUBLIC_KEY_LOCATION: file:/etc/jwt/public_key.pem
+
+# Secret'a yazılacak hassas değerler. Varsayılan YOK — kurulumda
+# `--set secrets.dbUsername=... --set secrets.dbPassword=...` ile veya gitignore'lu
+# bir values dosyasıyla sağlanmalı (bkz. helm/README.md).
+secrets: {}
+
+jwt:
+  publicKeySecretName: jwt-keys
+
+podDisruptionBudget:
+  enabled: false

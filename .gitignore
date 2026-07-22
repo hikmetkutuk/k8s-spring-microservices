@@ -47,6 +47,8 @@ application-local.properties
 **/.helm/
 kubeconfig
 *.kubeconfig
+helm/**/values-secrets*.yaml
+helm/**/values.local.yaml
 
 # Skaffold
 .skaffold/

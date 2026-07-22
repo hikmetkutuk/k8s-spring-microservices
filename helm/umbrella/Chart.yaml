@@ -1,0 +1,25 @@
+apiVersion: v2
+name: k8s-spring-microservices
+description: Tüm servisleri tek kurulumla ayağa kaldıran umbrella chart
+type: application
+version: 0.1.0
+appVersion: "0.1.0-SNAPSHOT"
+dependencies:
+  - name: auth-service
+    version: 0.1.0
+    repository: "file://../charts/auth-service"
+  - name: user-service
+    version: 0.1.0
+    repository: "file://../charts/user-service"
+  - name: catalog-service
+    version: 0.1.0
+    repository: "file://../charts/catalog-service"
+  - name: task-service
+    version: 0.1.0
+    repository: "file://../charts/task-service"
+  - name: notification-service
+    version: 0.1.0
+    repository: "file://../charts/notification-service"
+  - name: api-gateway
+    version: 0.1.0
+    repository: "file://../charts/api-gateway"
