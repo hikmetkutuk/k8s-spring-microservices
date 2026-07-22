@@ -1,6 +1,6 @@
 #!/bin/sh
 # auth-service'in ürettiği RS256 public key'ini local geliştirme için bu servise kopyalar.
-# Production'da bu paylaşım Kubernetes Secret ile yapılır (bkz. todo.md madde 4.2), bu script sadece local çalıştırma içindir.
+# Production'da bu paylaşım Kubernetes Secret ile yapılır, bu script sadece local çalıştırma içindir.
 
 set -e
 

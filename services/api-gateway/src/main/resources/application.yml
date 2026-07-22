@@ -1,0 +1,68 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: api-gateway
+  main:
+    web-application-type: reactive
+  # libs:common'daki servlet/MVC tabanlı auto-configuration'lar (GlobalExceptionHandler,
+  # JwtAuthenticationFilter) reactive gateway ile uyumsuz olduğundan devre dışı bırakılır;
+  # JWT doğrulaması bu servis için filter.JwtAuthenticationGatewayFilter ile yapılır.
+  autoconfigure:
+    exclude:
+      - com.k8sspringmicroservices.common.autoconfigure.CommonExceptionHandlingAutoConfiguration
+      - com.k8sspringmicroservices.common.security.jwt.JwtSecurityAutoConfiguration
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+  cloud:
+    gateway:
+      default-filters:
+        - name: RequestRateLimiter
+          args:
+            redis-rate-limiter.replenishRate: 20
+            redis-rate-limiter.burstCapacity: 40
+            key-resolver: "#{@ipKeyResolver}"
+      routes:
+        - id: auth-service
+          uri: ${AUTH_SERVICE_URL:http://localhost:8081}
+          predicates:
+            - Path=/auth/**
+        - id: user-service
+          uri: ${USER_SERVICE_URL:http://localhost:8082}
+          predicates:
+            - Path=/users/**
+        - id: catalog-service
+          uri: ${CATALOG_SERVICE_URL:http://localhost:8083}
+          predicates:
+            - Path=/catalog-items/**
+        - id: task-service
+          uri: ${TASK_SERVICE_URL:http://localhost:8084}
+          predicates:
+            - Path=/tasks/**
+        - id: notification-service
+          uri: ${NOTIFICATION_SERVICE_URL:http://localhost:8085}
+          predicates:
+            - Path=/notifications/**
+
+jwt:
+  public-key-location: ${JWT_PUBLIC_KEY_LOCATION:classpath:keys/public_key.pem}
+
+gateway:
+  security:
+    public-paths:
+      - /auth/register
+      - /auth/login
+      - /auth/refresh
+      - /actuator/health
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus
+  endpoint:
+    health:
+      show-details: when-authorized
