@@ -14,6 +14,9 @@ spec:
     metadata:
       labels:
         app.kubernetes.io/name: postgres
+      annotations:
+        checksum/secret: {{ include (print $.Template.BasePath "/postgres-secret.yaml") . | sha256sum }}
+        checksum/initdb: {{ include (print $.Template.BasePath "/postgres-configmap-initdb.yaml") . | sha256sum }}
     spec:
       securityContext:
         runAsNonRoot: true

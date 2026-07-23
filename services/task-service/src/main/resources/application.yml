@@ -51,6 +51,9 @@ resilience4j:
           - feign.FeignException$NotFound
 
 management:
+  tracing:
+    sampling:
+      probability: 1.0
   endpoints:
     web:
       exposure:

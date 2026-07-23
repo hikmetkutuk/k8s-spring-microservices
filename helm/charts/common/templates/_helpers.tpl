@@ -17,3 +17,13 @@ app.kubernetes.io/managed-by: {{ .Release.Service }}
 {{- define "common.selectorLabels" -}}
 app.kubernetes.io/name: {{ .Chart.Name }}
 {{- end -}}
+
+{{/*
+Prometheus'un annotation-tabanlı pod discovery ile Actuator metriklerini bulması için.
+Servisin service.port'unu kullanır — tüm servisler /actuator/prometheus'u aynı port'ta açar.
+*/}}
+{{- define "common.podAnnotations" -}}
+prometheus.io/scrape: "true"
+prometheus.io/path: "/actuator/prometheus"
+prometheus.io/port: {{ .Values.service.port | quote }}
+{{- end -}}

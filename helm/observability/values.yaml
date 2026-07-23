@@ -1,0 +1,98 @@
+prometheus:
+  fullnameOverride: prometheus
+  alertmanager:
+    enabled: false
+  server:
+    fullnameOverride: prometheus-server
+    persistentVolume:
+      size: 2Gi
+    resources:
+      requests:
+        cpu: 100m
+        memory: 256Mi
+      limits:
+        cpu: 500m
+        memory: 512Mi
+  # Not: chart'ın kendi varsayılan scrapeConfigs'inde zaten `prometheus.io/scrape` pod
+  # annotation'larını okuyan bir "kubernetes-pods" job'ı var — bizim servislerimizin
+  # `common.podAnnotations` helper'ıyla eklediği annotation'lar bu job tarafından otomatik
+  # keşfediliyor, ekstra scrape config gerekmiyor.
+
+grafana:
+  fullnameOverride: grafana
+  admin:
+    existingSecret: grafana-admin
+    userKey: admin-user
+    passwordKey: admin-password
+  persistence:
+    enabled: true
+    size: 1Gi
+  resources:
+    requests:
+      cpu: 50m
+      memory: 128Mi
+    limits:
+      cpu: 250m
+      memory: 256Mi
+  datasources:
+    datasources.yaml:
+      apiVersion: 1
+      datasources:
+        - name: Prometheus
+          type: prometheus
+          access: proxy
+          url: http://prometheus-server
+          isDefault: true
+        - name: Loki
+          type: loki
+          access: proxy
+          url: http://loki:3100
+        - name: Tempo
+          type: tempo
+          access: proxy
+          url: http://tempo:3200
+
+tempo:
+  fullnameOverride: tempo
+  persistence:
+    enabled: true
+    size: 2Gi
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+
+loki-stack:
+  loki:
+    fullnameOverride: loki
+    persistence:
+      enabled: true
+      size: 2Gi
+    resources:
+      requests:
+        cpu: 100m
+        memory: 256Mi
+      limits:
+        cpu: 500m
+        memory: 512Mi
+  promtail:
+    fullnameOverride: promtail
+    # loki-stack'in varsayılanı push URL'ini {{ .Release.Name }}:3100 olarak kurar; bizim
+    # release adımız "loki" olmadığı için (fullnameOverride: loki) bunu explicit vermek gerekiyor.
+    config:
+      clients:
+        - url: http://loki:3100/loki/api/v1/push
+    resources:
+      requests:
+        cpu: 50m
+        memory: 64Mi
+      limits:
+        cpu: 200m
+        memory: 128Mi
+
+# Grafana admin parolası. Varsayılan YOK — kurulumda --set/--set-file ile
+# ya da gitignore'lu bir values dosyasıyla sağlanmalı (bkz. helm/README.md).
+secrets: {}

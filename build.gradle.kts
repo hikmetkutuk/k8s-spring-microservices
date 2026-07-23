@@ -60,13 +60,18 @@ subprojects {
                 }
             }
             to {
-                image = "${findProperty("imageRegistry") ?: "localhost:5000"}/${project.name}"
-                tags = setOf(project.version.toString())
+                // Tag doğrudan image string'ine gömülü: Jib, to.image tag'sizse otomatik olarak
+                // ekstra bir ":latest" da push eder — CLAUDE.md'nin yasakladığı davranış budur.
+                image = "${findProperty("imageRegistry") ?: "localhost:5000"}/${project.name}:${project.version}"
                 auth {
                     username = System.getenv("REGISTRY_USERNAME")
                     password = System.getenv("REGISTRY_PASSWORD")
                 }
             }
+            // Local Kind registry düz HTTP üzerinden çalışır (bkz. infra/kind/create-cluster.sh).
+            // CI/production'da gerçek bir HTTPS registry'ye push edilirken bu -PjibAllowInsecureRegistries=false
+            // ile kapatılmalı (varsayılan değer sadece local dev'i hedefler, bkz. gradle.properties).
+            setAllowInsecureRegistries((findProperty("jibAllowInsecureRegistries") as String?)?.toBoolean() ?: false)
             container {
                 // Reproducible build: sabit epoch zaman damgası, aynı kaynak → bit-bit aynı image.
                 creationTime.set("EPOCH")

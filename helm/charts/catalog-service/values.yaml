@@ -3,7 +3,10 @@ replicaCount: 1
 image:
   repository: localhost:5001/catalog-service
   tag: "0.1.0-SNAPSHOT"
-  pullPolicy: IfNotPresent
+  # SNAPSHOT tag'i mutable (aynı tag farklı build'lerde farklı içerik taşıyabilir) —
+  # IfNotPresent kullanılırsa node yeni push'u fark etmez, eski cache'lenmiş image çalışır.
+  # Immutable/digest-pinned tag'lere geçilince (CI/CD, madde 16) IfNotPresent'e dönülebilir.
+  pullPolicy: Always
 
 service:
   port: 8083
@@ -20,6 +23,11 @@ resources:
 # varsayımıyla doldurulmuştur; madde 13'te kurulacak Postgres/Redis Helm release
 # adlarına göre `--set config.dbHost=...` ile override edilecek.
 config:
+  # OTel SDK, Spring'in management.otlp.tracing.endpoint property'sini değil doğrudan bu
+  # standart env var'ları okuyor (bu Boot 4.1.0 sürümünde property binding çalışmıyor).
+  OTEL_EXPORTER_OTLP_ENDPOINT: http://tempo.observability:4318
+  OTEL_EXPORTER_OTLP_PROTOCOL: http/protobuf
+  OTEL_SERVICE_NAME: catalog-service
   DB_HOST: postgres
   DB_PORT: "5432"
   DB_NAME: catalog_service

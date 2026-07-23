@@ -20,7 +20,11 @@ public class SecurityConfig {
         .authorizeHttpRequests(
             authorize ->
                 authorize
-                    .requestMatchers("/auth/**", "/actuator/health", "/actuator/health/**")
+                    .requestMatchers(
+                        "/auth/**",
+                        "/actuator/health",
+                        "/actuator/health/**",
+                        "/actuator/prometheus")
                     .permitAll()
                     .anyRequest()
                     .authenticated());
