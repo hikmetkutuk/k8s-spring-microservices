@@ -1,7 +1,7 @@
 replicaCount: 1
 
 image:
-  repository: localhost:5000/user-service
+  repository: localhost:5001/user-service
   tag: "0.1.0-SNAPSHOT"
   pullPolicy: IfNotPresent
 

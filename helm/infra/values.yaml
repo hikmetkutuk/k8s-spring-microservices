@@ -1,0 +1,48 @@
+postgres:
+  image: postgres:16-alpine
+  storageSize: 1Gi
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+  # Her servisin kendi veritabanı + kullanıcısı (init script ile ilk açılışta oluşturulur).
+  databases:
+    - name: auth_service
+      user: auth_service
+    - name: user_service
+      user: user_service
+    - name: catalog_service
+      user: catalog_service
+    - name: task_service
+      user: task_service
+    - name: notification_service
+      user: notification_service
+
+redis:
+  image: redis:7-alpine
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      cpu: 250m
+      memory: 256Mi
+
+kafka:
+  image: apache/kafka:3.8.0
+  storageSize: 2Gi
+  resources:
+    requests:
+      cpu: 200m
+      memory: 512Mi
+    limits:
+      cpu: 1000m
+      memory: 1Gi
+
+# Hassas değerler: Postgres superuser ve her servis DB'sinin parolası. Varsayılan YOK —
+# kurulumda --set/--set-file ile ya da gitignore'lu bir values dosyasıyla sağlanmalı
+# (bkz. helm/README.md). Anahtar adları templates/postgres-secret.yaml ile birebir eşleşir.
+secrets: {}

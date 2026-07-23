@@ -1,0 +1,9 @@
+apiVersion: v2
+name: infra
+description: >-
+  Local geliştirme altyapısı: PostgreSQL (tüm servisler için tek instance, çoklu DB/kullanıcı
+  init script'i ile), Redis, Kafka (KRaft, tek node). Production'da bunların yerini
+  managed servisler (RDS/Cloud SQL, ElastiCache/Memorystore, MSK/Confluent Cloud) alır.
+type: application
+version: 0.1.0
+appVersion: "1.0.0"

@@ -1,0 +1,19 @@
+# Local geliştirme için tek node'lu Kind cluster.
+# `containerdConfigPatches`, node'ların localhost:5001'deki local registry'yi (bkz.
+# create-cluster.sh) `kind-registry:5000` adıyla çözebilmesi için gerekli — Jib'in
+# push ettiği image'lar bu registry üzerinden node'lara pull edilir.
+# Not: 5000 değil 5001 kullanılıyor çünkü macOS'ta AirPlay Receiver (ControlCenter)
+# varsayılan olarak 5000 portunu dinliyor ve registry ile çakışıyor.
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+name: k8s-spring-microservices
+nodes:
+  - role: control-plane
+    # api-gateway'e host'tan doğrudan erişim istenirse: api-gateway Helm Service'i NodePort'a
+    # çevrilip nodePort: 30080 olarak ayarlanmalı, sonra buraya bir extraPortMappings
+    # (containerPort: 30080, hostPort: 8080) eklenmeli. Şimdilik gateway ClusterIP olduğu
+    # için bu eşleme hiçbir şeye bağlanmaz; port-forward kullanın (bkz. helm/README.md).
+containerdConfigPatches:
+  - |-
+    [plugins."io.containerd.grpc.v1.cri".registry.mirrors."localhost:5001"]
+      endpoint = ["http://kind-registry:5000"]

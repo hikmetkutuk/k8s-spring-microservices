@@ -10,12 +10,15 @@ helm/
 │   ├── task-service/
 │   ├── notification-service/
 │   └── api-gateway/
+├── infra/                     # Postgres/Redis/Kafka (bkz. infra/README.md) — madde 13
 └── umbrella/                  # Tüm servisleri tek `helm install` ile ayağa kaldıran meta-chart
 ```
 
-Altyapı (Postgres/Redis/Kafka) bu maddenin kapsamında değil — madde 13'te Kind/Minikube
-cluster'ına ayrı olarak Helm ile kurulacak. `config.dbHost`/`config.redisHost`/
-`config.kafkaBootstrapServers` değerleri o kurulumun servis adlarına göre override edilecek.
+Altyapı (Postgres/Redis/Kafka), `helm/infra` chart'ı ile Kind cluster'ına kuruluyor —
+kurulum talimatı için `infra/README.md`'ye bakın. Servis chart'larındaki `config.dbHost`
+(`postgres`), `config.redisHost` (`redis`) ve `config.kafkaBootstrapServers` (`kafka:9092`)
+varsayılanları, bu infra chart'ının Service adlarıyla birebir eşleşecek şekilde
+ayarlanmıştır; farklı bir altyapı kullanılırsa bu değerler override edilmelidir.
 
 ## Hassas değerler (secrets)
 

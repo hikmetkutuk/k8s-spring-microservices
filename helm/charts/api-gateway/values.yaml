@@ -1,7 +1,7 @@
 replicaCount: 1
 
 image:
-  repository: localhost:5000/api-gateway
+  repository: localhost:5001/api-gateway
   tag: "0.1.0-SNAPSHOT"
   pullPolicy: IfNotPresent
 
