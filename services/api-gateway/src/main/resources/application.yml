@@ -13,39 +13,95 @@ spring:
     exclude:
       - com.k8sspringmicroservices.common.autoconfigure.CommonExceptionHandlingAutoConfiguration
       - com.k8sspringmicroservices.common.security.jwt.JwtSecurityAutoConfiguration
+      # Spring Cloud 2025.0.0'ın discovery/load-balancer autoconfiguration'ları Boot 4.1.0'da
+      # taşınmış eski paketlere (org.springframework.boot.autoconfigure.web.ServerProperties,
+      # org.springframework.boot.web.context.WebServerInitializedEvent vb.) reflection ile
+      # eriştiği için NoClassDefFoundError atıyor. Statik route URL'leri kullandığımız için
+      # (service discovery/load balancer yok) zaten ihtiyaç duyulmuyor.
+      - org.springframework.cloud.client.discovery.simple.SimpleDiscoveryClientAutoConfiguration
+      - org.springframework.cloud.client.discovery.simple.reactive.SimpleReactiveDiscoveryClientAutoConfiguration
   data:
     redis:
       host: ${REDIS_HOST:localhost}
       port: ${REDIS_PORT:6379}
   cloud:
     gateway:
-      default-filters:
-        - name: RequestRateLimiter
-          args:
-            redis-rate-limiter.replenishRate: 20
-            redis-rate-limiter.burstCapacity: 40
-            key-resolver: "#{@ipKeyResolver}"
-      routes:
-        - id: auth-service
-          uri: ${AUTH_SERVICE_URL:http://localhost:8081}
-          predicates:
-            - Path=/auth/**
-        - id: user-service
-          uri: ${USER_SERVICE_URL:http://localhost:8082}
-          predicates:
-            - Path=/users/**
-        - id: catalog-service
-          uri: ${CATALOG_SERVICE_URL:http://localhost:8083}
-          predicates:
-            - Path=/catalog-items/**
-        - id: task-service
-          uri: ${TASK_SERVICE_URL:http://localhost:8084}
-          predicates:
-            - Path=/tasks/**
-        - id: notification-service
-          uri: ${NOTIFICATION_SERVICE_URL:http://localhost:8085}
-          predicates:
-            - Path=/notifications/**
+      server:
+        webflux:
+          default-filters:
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 20
+                redis-rate-limiter.burstCapacity: 40
+                key-resolver: "#{@ipKeyResolver}"
+          routes:
+            - id: auth-service
+              uri: ${AUTH_SERVICE_URL:http://localhost:8081}
+              predicates:
+                - Path=/auth/**
+            - id: user-service
+              uri: ${USER_SERVICE_URL:http://localhost:8082}
+              predicates:
+                - Path=/users/**
+            - id: catalog-service
+              uri: ${CATALOG_SERVICE_URL:http://localhost:8083}
+              predicates:
+                - Path=/catalog-items/**
+            - id: task-service
+              uri: ${TASK_SERVICE_URL:http://localhost:8084}
+              predicates:
+                - Path=/tasks/**
+            - id: notification-service
+              uri: ${NOTIFICATION_SERVICE_URL:http://localhost:8085}
+              predicates:
+                - Path=/notifications/**
+            # Swagger UI aggregation: her servisin kendi /v3/api-docs'unu ayrı bir path
+            # prefix'i altında proxy'liyoruz (servisler /auth/** gibi kendi path'lerinde
+            # zaten route edildiği için api-docs için ayrı bir prefix + RewritePath gerekiyor).
+            - id: auth-service-docs
+              uri: ${AUTH_SERVICE_URL:http://localhost:8081}
+              predicates:
+                - Path=/auth-docs/**
+              filters:
+                - RewritePath=/auth-docs/(?<segment>.*), /$\{segment}
+            - id: user-service-docs
+              uri: ${USER_SERVICE_URL:http://localhost:8082}
+              predicates:
+                - Path=/user-docs/**
+              filters:
+                - RewritePath=/user-docs/(?<segment>.*), /$\{segment}
+            - id: catalog-service-docs
+              uri: ${CATALOG_SERVICE_URL:http://localhost:8083}
+              predicates:
+                - Path=/catalog-docs/**
+              filters:
+                - RewritePath=/catalog-docs/(?<segment>.*), /$\{segment}
+            - id: task-service-docs
+              uri: ${TASK_SERVICE_URL:http://localhost:8084}
+              predicates:
+                - Path=/task-docs/**
+              filters:
+                - RewritePath=/task-docs/(?<segment>.*), /$\{segment}
+            - id: notification-service-docs
+              uri: ${NOTIFICATION_SERVICE_URL:http://localhost:8085}
+              predicates:
+                - Path=/notification-docs/**
+              filters:
+                - RewritePath=/notification-docs/(?<segment>.*), /$\{segment}
+
+springdoc:
+  swagger-ui:
+    urls:
+      - name: auth-service
+        url: /auth-docs/v3/api-docs
+      - name: user-service
+        url: /user-docs/v3/api-docs
+      - name: catalog-service
+        url: /catalog-docs/v3/api-docs
+      - name: task-service
+        url: /task-docs/v3/api-docs
+      - name: notification-service
+        url: /notification-docs/v3/api-docs
 
 jwt:
   public-key-location: ${JWT_PUBLIC_KEY_LOCATION:classpath:keys/public_key.pem}
@@ -58,6 +114,13 @@ gateway:
       - /auth/refresh
       - /actuator/health
       - /actuator/prometheus
+      - /auth-docs
+      - /user-docs
+      - /catalog-docs
+      - /task-docs
+      - /notification-docs
+      - /swagger-ui
+      - /v3/api-docs
 
 management:
   tracing:

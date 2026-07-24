@@ -4,6 +4,16 @@ server:
 spring:
   application:
     name: task-service
+  # Spring Cloud 2025.0.0'ın discovery autoconfiguration'ı (OpenFeign'in getirdiği
+  # spring-cloud-commons transitive'i), Boot 4.1.0'da taşınmış eski
+  # `org.springframework.boot.autoconfigure.web.ServerProperties` paketine reflection ile
+  # eriştiği için NoClassDefFoundError atıyor. Statik URL ile Feign kullandığımız için
+  # (service discovery yok) zaten ihtiyaç duyulmuyor; spring-cloud-commons'ın kendisi
+  # FeignAutoConfiguration'ın derleme zamanı bağımlılığı olduğu için modül dışlanamıyor,
+  # sadece bu tek autoconfiguration class'ı dışlanıyor.
+  autoconfigure:
+    exclude:
+      - org.springframework.cloud.client.discovery.simple.SimpleDiscoveryClientAutoConfiguration
   datasource:
     url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:task_service}
     username: ${DB_USERNAME:task_service}

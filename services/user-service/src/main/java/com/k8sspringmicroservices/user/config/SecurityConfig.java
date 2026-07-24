@@ -25,7 +25,12 @@ public class SecurityConfig {
             authorize ->
                 authorize
                     .requestMatchers(
-                        "/actuator/health", "/actuator/health/**", "/actuator/prometheus")
+                        "/actuator/health",
+                        "/actuator/health/**",
+                        "/actuator/prometheus",
+                        "/v3/api-docs/**",
+                        "/swagger-ui/**",
+                        "/swagger-ui.html")
                     .permitAll()
                     .anyRequest()
                     .authenticated())

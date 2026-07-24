@@ -9,7 +9,11 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
     implementation("org.springframework.boot:spring-boot-starter-validation")
     implementation("org.springframework.boot:spring-boot-starter-actuator")
-    implementation("org.springframework.kafka:spring-kafka")
+    implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:${property("springdocVersion")}")
+    // Spring Boot 4'te Kafka autoconfiguration'ı ayrı bir starter'a taşınmış (Flyway ile
+    // aynı desen) — sadece spring-kafka yeterli değil, KafkaTemplate/KafkaOperations bean'i
+    // wiring edilmiyor.
+    implementation("org.springframework.boot:spring-boot-starter-kafka")
     runtimeOnly("io.micrometer:micrometer-registry-prometheus")
 
     runtimeOnly("org.postgresql:postgresql")
