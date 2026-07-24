@@ -29,6 +29,17 @@ spring:
       server:
         webflux:
           default-filters:
+            # Hijyen: istemciden gelen Forwarded/X-Forwarded-* header'larını girişte siliyoruz.
+            # OpenAPI "servers" adresi artık header'lardan değil, her servisin
+            # ServerBaseUrlCustomizer'ında sabit/konfigüre edilen değerden geliyor (bkz.
+            # OpenApiConfig.java) — bu yüzden backend'lerde forward-headers-strategy da
+            # devre dışı, hiçbir servis client-supplied forwarded header'a güvenmiyor.
+            - RemoveRequestHeader=Forwarded
+            - RemoveRequestHeader=X-Forwarded-For
+            - RemoveRequestHeader=X-Forwarded-Host
+            - RemoveRequestHeader=X-Forwarded-Port
+            - RemoveRequestHeader=X-Forwarded-Proto
+            - RemoveRequestHeader=X-Forwarded-Prefix
             - name: RequestRateLimiter
               args:
                 redis-rate-limiter.replenishRate: 20

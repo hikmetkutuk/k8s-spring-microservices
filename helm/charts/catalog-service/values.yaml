@@ -34,6 +34,12 @@ config:
   REDIS_HOST: redis
   REDIS_PORT: "6379"
   JWT_PUBLIC_KEY_LOCATION: file:/etc/jwt/public_key.pem
+  # Swagger UI, gateway aggregation'ı ile bu prefix altında proxy'leniyor.
+  # springdoc'un OpenAPI "servers" adresini istemciden gelen (sahte olabilecek)
+  # Forwarded/X-Forwarded-* header'larından değil, bu sabit değerden üretmesini
+  # sağlar (bkz. OpenApiConfig.java ServerBaseUrlCustomizer). Local Kind port-forward'a
+  # özgü; farklı ortamda gateway'in gerçek dışa açık adresiyle override edilmeli.
+  SPRINGDOC_SERVER_BASE_URL: http://localhost:18080/catalog-docs
 
 # Secret'a yazılacak hassas değerler. Varsayılan YOK — kurulumda
 # `--set secrets.dbUsername=... --set secrets.dbPassword=...` ile veya gitignore'lu
