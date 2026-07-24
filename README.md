@@ -54,6 +54,28 @@ paylaşım Kubernetes Secret üzerinden yapılır.
 ./gradlew build
 ```
 
+## Skaffold ile local Kind dev loop
+
+Kod değişikliğinde otomatik build (Jib) + push + Helm upgrade + log/port-forward için
+[Skaffold](https://skaffold.dev/) kullanılıyor (`skaffold.yaml`, kök dizinde). Önkoşul:
+`infra/kind/create-cluster.sh` ve `infra/kind/deploy-infra.sh` ile Kind cluster'ı ve
+altyapı (Postgres/Redis/Kafka) ayakta olmalı (bkz. `infra/README.md`).
+
+Her servis chart'ının yanındaki `values-secrets.yaml` (DB kullanıcı adı/şifresi,
+auth-service için JWT RS256 anahtar çifti) `.gitignore`'lu olduğu için repo'da yok —
+`skaffold dev`/`skaffold run` çalıştırmadan önce tek seferlik üretin:
+
+```
+infra/kind/generate-skaffold-secrets.sh
+```
+
+Sonrasında:
+
+```
+skaffold dev --port-forward   # sürekli izleme: kod değişikliğinde otomatik rebuild+redeploy
+skaffold run                  # tek seferlik build+deploy
+```
+
 Tek bir servisi build etmek için:
 
 ```

@@ -1,0 +1,93 @@
+apiVersion: skaffold/v4beta11
+kind: Config
+metadata:
+  name: k8s-spring-microservices
+
+build:
+  artifacts:
+    - image: localhost:5001/auth-service
+      context: .
+      jib:
+        project: services:auth-service
+    - image: localhost:5001/user-service
+      context: .
+      jib:
+        project: services:user-service
+    - image: localhost:5001/catalog-service
+      context: .
+      jib:
+        project: services:catalog-service
+    - image: localhost:5001/task-service
+      context: .
+      jib:
+        project: services:task-service
+    - image: localhost:5001/notification-service
+      context: .
+      jib:
+        project: services:notification-service
+    - image: localhost:5001/api-gateway
+      context: .
+      jib:
+        project: services:api-gateway
+  # Kind cluster'ı ayrı bir Docker registry container'ından (localhost:5001) image çekiyor —
+  # Skaffold'un yerel Docker daemon cache'ine bırakması yeterli değil, gerçekten push etmesi
+  # gerekiyor (bkz. infra/kind/create-cluster.sh).
+  local:
+    push: true
+
+deploy:
+  helm:
+    releases:
+      - name: auth-service
+        chartPath: helm/charts/auth-service
+        namespace: microservices
+        valuesFiles:
+          - helm/charts/auth-service/values-secrets.yaml
+        setValueTemplates:
+          image.repository: "{{.IMAGE_REPO_localhost_5001_auth_service}}"
+          image.tag: "{{.IMAGE_TAG_localhost_5001_auth_service}}"
+      - name: user-service
+        chartPath: helm/charts/user-service
+        namespace: microservices
+        valuesFiles:
+          - helm/charts/user-service/values-secrets.yaml
+        setValueTemplates:
+          image.repository: "{{.IMAGE_REPO_localhost_5001_user_service}}"
+          image.tag: "{{.IMAGE_TAG_localhost_5001_user_service}}"
+      - name: catalog-service
+        chartPath: helm/charts/catalog-service
+        namespace: microservices
+        valuesFiles:
+          - helm/charts/catalog-service/values-secrets.yaml
+        setValueTemplates:
+          image.repository: "{{.IMAGE_REPO_localhost_5001_catalog_service}}"
+          image.tag: "{{.IMAGE_TAG_localhost_5001_catalog_service}}"
+      - name: task-service
+        chartPath: helm/charts/task-service
+        namespace: microservices
+        valuesFiles:
+          - helm/charts/task-service/values-secrets.yaml
+        setValueTemplates:
+          image.repository: "{{.IMAGE_REPO_localhost_5001_task_service}}"
+          image.tag: "{{.IMAGE_TAG_localhost_5001_task_service}}"
+      - name: notification-service
+        chartPath: helm/charts/notification-service
+        namespace: microservices
+        valuesFiles:
+          - helm/charts/notification-service/values-secrets.yaml
+        setValueTemplates:
+          image.repository: "{{.IMAGE_REPO_localhost_5001_notification_service}}"
+          image.tag: "{{.IMAGE_TAG_localhost_5001_notification_service}}"
+      - name: api-gateway
+        chartPath: helm/charts/api-gateway
+        namespace: microservices
+        setValueTemplates:
+          image.repository: "{{.IMAGE_REPO_localhost_5001_api_gateway}}"
+          image.tag: "{{.IMAGE_TAG_localhost_5001_api_gateway}}"
+
+portForward:
+  - resourceType: service
+    resourceName: api-gateway
+    namespace: microservices
+    port: 8080
+    localPort: 18080
