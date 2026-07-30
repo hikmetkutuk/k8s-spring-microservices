@@ -25,8 +25,24 @@ subprojects {
         }
     }
 
+    // Mockito'nun inline mock maker'ı JDK'ya kendi kendine agent olarak attach ediyor;
+    // bu, gelecekteki JDK sürümlerinde kaldırılacak (JEP 451). Mockito'nun önerdiği gibi
+    // agent'ı build'de explicit tanımlıyoruz (bkz. https://github.com/mockito/mockito/issues/3111).
+    val mockitoAgent = configurations.create("mockitoAgent")
+
     tasks.withType<Test> {
         useJUnitPlatform()
+        doFirst {
+            if (!mockitoAgent.isEmpty) {
+                jvmArgs("-javaagent:${mockitoAgent.singleFile}")
+            }
+        }
+    }
+
+    dependencies {
+        mockitoAgent("org.mockito:mockito-core:${property("mockitoVersion")}") {
+            isTransitive = false
+        }
     }
 
     configure<com.diffplug.gradle.spotless.SpotlessExtension> {
