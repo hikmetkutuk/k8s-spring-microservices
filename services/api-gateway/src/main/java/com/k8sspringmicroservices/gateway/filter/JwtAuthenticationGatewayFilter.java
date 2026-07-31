@@ -54,7 +54,11 @@ public class JwtAuthenticationGatewayFilter implements GlobalFilter, Ordered {
 
   @Override
   public int getOrder() {
-    return -1;
+    // Route'un default-filter'ları (SecureHeaders, RemoveRequestHeader, RequestRateLimiter)
+    // düşük order değerleriyle önce çalışır ki bu filtre 401 ile kısa devre yaptığında bile
+    // (chain.filter() hiç çağrılmadığında) SecureHeaders'ın response header'ları eklemesi
+    // garanti olsun — negatif/çok küçük bir order, SecureHeaders'ı hiç çalıştırmadan atlardı.
+    return 100;
   }
 
   private boolean isPublic(String path) {

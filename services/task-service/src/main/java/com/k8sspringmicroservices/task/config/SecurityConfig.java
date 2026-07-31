@@ -22,6 +22,15 @@ public class SecurityConfig {
     http.csrf(AbstractHttpConfigurer::disable)
         .sessionManagement(
             session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+        // X-Frame-Options DENY ve X-Content-Type-Options nosniff zaten Spring Security
+        // varsayılanı; CSP ve HSTS ise defense-in-depth için burada da açıkça ekleniyor
+        // (asıl edge api-gateway'in SecureHeaders filter'ı — bkz. api-gateway application.yml).
+        .headers(
+            headers ->
+                headers
+                    .contentSecurityPolicy(csp -> csp.policyDirectives("default-src 'self'"))
+                    .httpStrictTransportSecurity(
+                        hsts -> hsts.includeSubDomains(true).maxAgeInSeconds(31536000)))
         .authorizeHttpRequests(
             authorize ->
                 authorize

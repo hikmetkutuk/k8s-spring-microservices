@@ -28,7 +28,27 @@ spring:
     gateway:
       server:
         webflux:
+          # Tarayıcıdan gelen istekler için CORS — bu servis tek edge olduğundan
+          # CORS'un doğru tanımlanacağı tek yer burası (backend'ler doğrudan browser'dan
+          # çağrılmaz). Üretimde CORS_ALLOWED_ORIGINS ile gerçek frontend origin'i set edilmeli;
+          # varsayılan sadece local dev'i (React/Vite tipik portları) hedefler.
+          globalcors:
+            cors-configurations:
+              "[/**]":
+                allowedOriginPatterns: "${CORS_ALLOWED_ORIGINS:http://localhost:3000,http://localhost:5173}"
+                allowedMethods: [GET, POST, PUT, PATCH, DELETE, OPTIONS]
+                allowedHeaders: [Authorization, Content-Type]
+                allowCredentials: true
+                maxAge: 3600
+          filter:
+            # Response security header'ları: HSTS, CSP, X-Frame-Options, X-Content-Type-Options
+            # vb. Spring Cloud Gateway'in yerleşik SecureHeaders filter'ı ile tek yerden
+            # (edge'de) eklenir — backend'lerin ayrıca kendi header'larını yazması bu yüzden
+            # zorunlu değil ama defense-in-depth için SecurityConfig'lerinde de tanımlı.
+            secure-headers:
+              content-security-policy: "default-src 'self'"
           default-filters:
+            - SecureHeaders
             # Hijyen: istemciden gelen Forwarded/X-Forwarded-* header'larını girişte siliyoruz.
             # OpenAPI "servers" adresi artık header'lardan değil, her servisin
             # ServerBaseUrlCustomizer'ında sabit/konfigüre edilen değerden geliyor (bkz.
