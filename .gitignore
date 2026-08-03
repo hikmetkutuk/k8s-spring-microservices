@@ -39,6 +39,8 @@ logs/
 .env.*
 *.pem
 *.key
+# Test key'leri secret değil, test JWT doğrulaması için kullanılır — commit'e dahil edilmeli.
+!**/src/test/resources/keys/*.pem
 application-local.yml
 application-local.properties
 

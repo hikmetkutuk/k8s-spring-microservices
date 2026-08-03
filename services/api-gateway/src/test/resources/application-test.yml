@@ -1,0 +1,15 @@
+spring:
+  autoconfigure:
+    exclude:
+      - com.k8sspringmicroservices.common.autoconfigure.CommonExceptionHandlingAutoConfiguration
+      - com.k8sspringmicroservices.common.security.jwt.JwtSecurityAutoConfiguration
+      - org.springframework.cloud.client.discovery.simple.SimpleDiscoveryClientAutoConfiguration
+      - org.springframework.cloud.client.discovery.simple.reactive.SimpleReactiveDiscoveryClientAutoConfiguration
+      - org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration
+      - org.springframework.boot.autoconfigure.data.redis.RedisReactiveAutoConfiguration
+  cloud:
+    gateway:
+      server:
+        webflux:
+          default-filters:
+            - SecureHeaders
