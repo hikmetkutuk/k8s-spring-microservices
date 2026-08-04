@@ -8,6 +8,13 @@ postgres:
     limits:
       cpu: 500m
       memory: 512Mi
+  # Otomatik pg_dumpall backup (CronJob). Production'da buna ek olarak PVC snapshot
+  # (VolumeSnapshot) veya managed servis backup'ı (RDS/Cloud SQL) de kullanılmalı.
+  backup:
+    enabled: true
+    schedule: "0 2 * * *"   # Her gece 02:00 UTC
+    retentionDays: 7
+    storageSize: 1Gi
   # Her servisin kendi veritabanı + kullanıcısı (init script ile ilk açılışta oluşturulur).
   databases:
     - name: auth_service

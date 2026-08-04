@@ -46,7 +46,88 @@ kubectl exec -n microservices kafka-0 -- /opt/kafka/bin/kafka-topics.sh \
   --bootstrap-server localhost:9092 --list
 ```
 
-## 3. Uygulama servislerini deploy etme
+## 3. PostgreSQL Backup ve Restore
+
+`helm/infra` chart'ı otomatik günlük backup için bir **CronJob** içerir
+(`backup-cronjob.yaml`). Backup'lar ayrı bir PVC'de (`postgres-backups`) saklanır.
+
+### Backup stratejisi
+
+| Özellik | Ayar |
+|---|---|
+| Schedule | Her gece 02:00 UTC (`postgres.backup.schedule`) |
+| Retention | Son 7 gün (`postgres.backup.retentionDays`) |
+| Yöntem | `pg_dumpall \| gzip` |
+| Depolama | PVC (`postgres-backups`, `postgres.backup.storageSize`, varsayılan 1Gi) |
+| Devre dışı bırakma | `postgres.backup.enabled: false` |
+
+**Production notu:** Bu pg_dump tabanlı yaklaşım local/dev ortamlar için yeterlidir.
+Production'da aşağıdakiler de değerlendirilmelidir:
+- **Managed servis backup'ı** (RDS automated backup, Cloud SQL export)
+- **PVC snapshot** (`VolumeSnapshot` — CSI driver gerektirir, Kind'da yok)
+- **WAL archiving** (`pg_basebackup` + `wal-g`/`barman`/`pgBackRest` ile PITR)
+- Backup'ların **cluster dışına kopyalanması** (S3, GCS, Azure Blob)
+
+### Manuel backup tetikleme
+
+```bash
+./infra/kind/backup-now.sh
+```
+
+CronJob'tan bir Job oluşturup hemen çalıştırır, log'ları gösterir.
+
+### Backup'ları listeleme
+
+```bash
+kubectl run backup-ls --rm -i --restart=Never --image=busybox:1.36 \
+  -n microservices --overrides='
+{
+  "spec": {
+    "containers": [{
+      "name": "ls",
+      "image": "busybox:1.36",
+      "command": ["sh", "-c", "ls -lh /backups/"],
+      "volumeMounts": [{"name": "backups", "mountPath": "/backups"}]
+    }],
+    "volumes": [{
+      "name": "backups",
+      "persistentVolumeClaim": {"claimName": "postgres-backups"}
+    }]
+  }
+}'
+```
+
+### Restore
+
+```bash
+# En son backup'ı listeler, onay bekler ve restore eder:
+./infra/kind/restore-db.sh
+
+# Belirli bir backup'ı restore eder:
+./infra/kind/restore-db.sh backup-20260101-020000.sql.gz
+```
+
+Restore işlemi:
+1. Mevcut backup'ları listeler
+2. Restore öncesi mevcut veriyi güvenlik amaçlı yedekler (`pre-restore-*.sql.gz`)
+3. Tüm servis veritabanlarını drop eder
+4. Seçilen backup'ı `psql` ile geri yükler
+
+Restore sonrası servislerin yeniden bağlanması için:
+```bash
+kubectl rollout restart deployment -n microservices
+```
+
+### Backup PVC'sini büyütme
+
+```bash
+kubectl patch pvc postgres-backups -n microservices \
+  -p '{"spec":{"resources":{"requests":{"storage":"5Gi"}}}}'
+```
+
+(Depolama sınıfı `allowVolumeExpansion: true` desteklemelidir.)
+
+## 4. Uygulama servislerini deploy etme
 
 Servis image'larını build edip local registry'ye push etmek için:
 
@@ -57,7 +138,7 @@ Servis image'larını build edip local registry'ye push etmek için:
 Ardından `helm/umbrella` chart'ı ile deploy — bkz. `helm/README.md`. Bu adım madde 18
 (uçtan uca doğrulama) kapsamında ele alınacak.
 
-## 4. Temizlik
+## 5. Temizlik
 
 ```
 kind delete cluster --name k8s-spring-microservices
