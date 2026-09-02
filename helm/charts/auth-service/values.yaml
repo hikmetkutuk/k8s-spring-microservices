@@ -56,5 +56,5 @@ jwtKeys:
   publicKey: ""
 
 podDisruptionBudget:
-  enabled: true
+  enabled: false
   minAvailable: 1

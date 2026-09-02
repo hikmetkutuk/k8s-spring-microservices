@@ -40,5 +40,5 @@ jwt:
   publicKeySecretName: jwt-keys
 
 podDisruptionBudget:
-  enabled: true
+  enabled: false
   minAvailable: 1

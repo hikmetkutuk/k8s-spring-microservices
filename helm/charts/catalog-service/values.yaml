@@ -51,3 +51,4 @@ jwt:
 
 podDisruptionBudget:
   enabled: false
+  minAvailable: 1

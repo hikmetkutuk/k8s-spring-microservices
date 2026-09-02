@@ -36,6 +36,7 @@ import org.testcontainers.kafka.ConfluentKafkaContainer;
  * notification-service tarafındaki dinleyici tarafından doğru şekilde tüketilip
  * NotificationUseCase'e iletildiğini doğrular.
  */
+@SuppressWarnings("deprecation")
 @Testcontainers
 class TaskCreatedEventKafkaIT {
 
