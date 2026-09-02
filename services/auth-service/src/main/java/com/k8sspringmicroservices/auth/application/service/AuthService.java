@@ -7,7 +7,6 @@ import com.k8sspringmicroservices.auth.application.port.out.UserRepositoryPort;
 import com.k8sspringmicroservices.auth.domain.User;
 import com.k8sspringmicroservices.common.exception.ApplicationException;
 import com.k8sspringmicroservices.common.exception.ConflictException;
-import com.k8sspringmicroservices.common.exception.ResourceNotFoundException;
 import java.util.Set;
 import java.util.UUID;
 import org.springframework.http.HttpStatus;
@@ -70,15 +69,18 @@ public class AuthService implements AuthUseCase {
   public TokenPair refresh(String refreshToken) {
     String userId =
         refreshTokenStore
-            .resolveUserId(refreshToken)
+            .consume(refreshToken)
             .orElseThrow(() -> unauthorized("Invalid or expired refresh token"));
 
     User user =
         userRepository
             .findById(userId)
-            .orElseThrow(() -> ResourceNotFoundException.forId("User", userId));
+            .orElseThrow(() -> unauthorized("Invalid or expired refresh token"));
 
-    refreshTokenStore.revoke(refreshToken);
+    if (!user.isEnabled()) {
+      throw unauthorized("Account is disabled");
+    }
+
     return issueTokenPair(user);
   }
 

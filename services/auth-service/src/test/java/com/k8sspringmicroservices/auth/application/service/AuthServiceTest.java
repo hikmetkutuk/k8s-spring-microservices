@@ -15,7 +15,6 @@ import com.k8sspringmicroservices.auth.application.port.out.UserRepositoryPort;
 import com.k8sspringmicroservices.auth.domain.User;
 import com.k8sspringmicroservices.common.exception.ApplicationException;
 import com.k8sspringmicroservices.common.exception.ConflictException;
-import com.k8sspringmicroservices.common.exception.ResourceNotFoundException;
 import java.util.Optional;
 import java.util.Set;
 import org.junit.jupiter.api.BeforeEach;
@@ -125,10 +124,10 @@ class AuthServiceTest {
   }
 
   @Test
-  void refresh_revokesOldTokenAndIssuesNewPair() {
+  void refresh_consumesOldTokenAtomicallyAndIssuesNewPair() {
     User user =
         new User("u-1", "alice", "alice@example.com", "hashed-secret", Set.of("USER"), true);
-    when(refreshTokenStore.resolveUserId("old-refresh")).thenReturn(Optional.of("u-1"));
+    when(refreshTokenStore.consume("old-refresh")).thenReturn(Optional.of("u-1"));
     when(userRepository.findById("u-1")).thenReturn(Optional.of(user));
     when(tokenProvider.generateAccessToken(user)).thenReturn("new-access-token");
     when(tokenProvider.getAccessTokenExpirationSeconds()).thenReturn(900L);
@@ -138,24 +137,37 @@ class AuthServiceTest {
 
     assertThat(result.accessToken()).isEqualTo("new-access-token");
     assertThat(result.refreshToken()).isEqualTo("new-refresh-token");
-    verify(refreshTokenStore).revoke("old-refresh");
+    verify(refreshTokenStore, never()).revoke(any());
   }
 
   @Test
   void refresh_throwsUnauthorized_whenTokenInvalidOrExpired() {
-    when(refreshTokenStore.resolveUserId("bad-token")).thenReturn(Optional.empty());
+    when(refreshTokenStore.consume("bad-token")).thenReturn(Optional.empty());
 
     assertThatThrownBy(() -> authService.refresh("bad-token"))
         .isInstanceOf(ApplicationException.class);
   }
 
   @Test
-  void refresh_throwsResourceNotFound_whenUserNoLongerExists() {
-    when(refreshTokenStore.resolveUserId("old-refresh")).thenReturn(Optional.of("u-1"));
+  void refresh_throwsUnauthorized_whenUserNoLongerExists() {
+    when(refreshTokenStore.consume("old-refresh")).thenReturn(Optional.of("u-1"));
     when(userRepository.findById("u-1")).thenReturn(Optional.empty());
 
     assertThatThrownBy(() -> authService.refresh("old-refresh"))
-        .isInstanceOf(ResourceNotFoundException.class);
+        .isInstanceOf(ApplicationException.class);
+  }
+
+  @Test
+  void refresh_throwsUnauthorized_whenUserDisabled() {
+    User disabled =
+        new User("u-1", "alice", "alice@example.com", "hashed-secret", Set.of("USER"), false);
+    when(refreshTokenStore.consume("old-refresh")).thenReturn(Optional.of("u-1"));
+    when(userRepository.findById("u-1")).thenReturn(Optional.of(disabled));
+
+    assertThatThrownBy(() -> authService.refresh("old-refresh"))
+        .isInstanceOf(ApplicationException.class);
+
+    verify(tokenProvider, never()).generateAccessToken(any());
   }
 
   @Test

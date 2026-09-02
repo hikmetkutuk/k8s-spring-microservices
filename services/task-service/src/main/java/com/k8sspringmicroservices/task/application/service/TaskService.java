@@ -4,13 +4,13 @@ import com.k8sspringmicroservices.common.event.TaskCreatedEvent;
 import com.k8sspringmicroservices.common.exception.ResourceNotFoundException;
 import com.k8sspringmicroservices.task.application.port.in.TaskUseCase;
 import com.k8sspringmicroservices.task.application.port.out.CatalogItemPort;
-import com.k8sspringmicroservices.task.application.port.out.TaskEventPublisherPort;
 import com.k8sspringmicroservices.task.application.port.out.TaskRepositoryPort;
 import com.k8sspringmicroservices.task.domain.Task;
 import com.k8sspringmicroservices.task.domain.TaskStatus;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,15 +19,15 @@ public class TaskService implements TaskUseCase {
 
   private final TaskRepositoryPort repository;
   private final CatalogItemPort catalogItemPort;
-  private final TaskEventPublisherPort eventPublisherPort;
+  private final ApplicationEventPublisher eventPublisher;
 
   public TaskService(
       TaskRepositoryPort repository,
       CatalogItemPort catalogItemPort,
-      TaskEventPublisherPort eventPublisherPort) {
+      ApplicationEventPublisher eventPublisher) {
     this.repository = repository;
     this.catalogItemPort = catalogItemPort;
-    this.eventPublisherPort = eventPublisherPort;
+    this.eventPublisher = eventPublisher;
   }
 
   @Override
@@ -50,14 +50,16 @@ public class TaskService implements TaskUseCase {
             now);
     Task saved = repository.save(task);
 
-    eventPublisherPort.publishTaskCreated(
-        new TaskCreatedEvent(
-            saved.id(),
-            saved.ownerId(),
-            saved.catalogItemId(),
-            saved.title(),
-            saved.quantity(),
-            saved.createdAt()));
+    eventPublisher.publishEvent(
+        new TaskCreatedApplicationEvent(
+            this,
+            new TaskCreatedEvent(
+                saved.id(),
+                saved.ownerId(),
+                saved.catalogItemId(),
+                saved.title(),
+                saved.quantity(),
+                saved.createdAt())));
 
     return saved;
   }

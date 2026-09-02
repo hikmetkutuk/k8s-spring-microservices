@@ -7,10 +7,8 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.k8sspringmicroservices.common.event.TaskCreatedEvent;
 import com.k8sspringmicroservices.common.exception.ResourceNotFoundException;
 import com.k8sspringmicroservices.task.application.port.out.CatalogItemPort;
-import com.k8sspringmicroservices.task.application.port.out.TaskEventPublisherPort;
 import com.k8sspringmicroservices.task.application.port.out.TaskRepositoryPort;
 import com.k8sspringmicroservices.task.domain.CatalogItemSummary;
 import com.k8sspringmicroservices.task.domain.Task;
@@ -25,19 +23,20 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 
 @ExtendWith(MockitoExtension.class)
 class TaskServiceTest {
 
   @Mock private TaskRepositoryPort repository;
   @Mock private CatalogItemPort catalogItemPort;
-  @Mock private TaskEventPublisherPort eventPublisherPort;
+  @Mock private ApplicationEventPublisher eventPublisher;
 
   private TaskService service;
 
   @BeforeEach
   void setUp() {
-    service = new TaskService(repository, catalogItemPort, eventPublisherPort);
+    service = new TaskService(repository, catalogItemPort, eventPublisher);
   }
 
   @Test
@@ -52,13 +51,14 @@ class TaskServiceTest {
     assertThat(result.catalogItemId()).isEqualTo("c-1");
     assertThat(result.status()).isEqualTo(TaskStatus.PENDING);
 
-    ArgumentCaptor<TaskCreatedEvent> eventCaptor = ArgumentCaptor.forClass(TaskCreatedEvent.class);
-    verify(eventPublisherPort).publishTaskCreated(eventCaptor.capture());
-    TaskCreatedEvent published = eventCaptor.getValue();
-    assertThat(published.taskId()).isEqualTo(result.id());
-    assertThat(published.ownerId()).isEqualTo("owner-1");
-    assertThat(published.catalogItemId()).isEqualTo("c-1");
-    assertThat(published.quantity()).isEqualTo(2);
+    ArgumentCaptor<TaskCreatedApplicationEvent> eventCaptor =
+        ArgumentCaptor.forClass(TaskCreatedApplicationEvent.class);
+    verify(eventPublisher).publishEvent(eventCaptor.capture());
+    TaskCreatedApplicationEvent published = eventCaptor.getValue();
+    assertThat(published.getPayload().taskId()).isEqualTo(result.id());
+    assertThat(published.getPayload().ownerId()).isEqualTo("owner-1");
+    assertThat(published.getPayload().catalogItemId()).isEqualTo("c-1");
+    assertThat(published.getPayload().quantity()).isEqualTo(2);
   }
 
   @Test
@@ -70,12 +70,12 @@ class TaskServiceTest {
         .isInstanceOf(ResourceNotFoundException.class);
 
     verify(repository, never()).save(any());
-    verify(eventPublisherPort, never()).publishTaskCreated(any());
+    verify(eventPublisher, never()).publishEvent(any());
   }
 
   @Test
   void get_returnsTask_whenFound() {
-    Task task = sampleTask("t-1");
+    Task task = sampleTask();
     when(repository.findById("t-1")).thenReturn(Optional.of(task));
 
     assertThat(service.get("t-1")).isEqualTo(task);
@@ -90,7 +90,7 @@ class TaskServiceTest {
 
   @Test
   void listByOwner_delegatesToRepository() {
-    Task task = sampleTask("t-1");
+    Task task = sampleTask();
     when(repository.findAllByOwnerId("owner-1")).thenReturn(List.of(task));
 
     assertThat(service.listByOwner("owner-1")).containsExactly(task);
@@ -98,7 +98,7 @@ class TaskServiceTest {
 
   @Test
   void update_preservesOwnerCatalogItemAndCreatedAt() {
-    Task existing = sampleTask("t-1");
+    Task existing = sampleTask();
     when(repository.findById("t-1")).thenReturn(Optional.of(existing));
     when(repository.save(any(Task.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
@@ -129,8 +129,8 @@ class TaskServiceTest {
     verify(repository, never()).deleteById(any());
   }
 
-  private Task sampleTask(String id) {
+  private Task sampleTask() {
     Instant now = Instant.now();
-    return new Task(id, "owner-1", "c-1", "Buy widget", "desc", 2, TaskStatus.PENDING, now, now);
+    return new Task("t-1", "owner-1", "c-1", "Buy widget", "desc", 2, TaskStatus.PENDING, now, now);
   }
 }
