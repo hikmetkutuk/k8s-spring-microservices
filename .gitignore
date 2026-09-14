@@ -73,3 +73,5 @@ coverage/
 # Temp
 *.tmp
 *.bak
+
+.zed/
