@@ -25,8 +25,8 @@ import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.listener.ContainerProperties;
 import org.springframework.kafka.listener.KafkaMessageListenerContainer;
 import org.springframework.kafka.listener.MessageListener;
-import org.springframework.kafka.support.serializer.JsonDeserializer;
-import org.springframework.kafka.support.serializer.JsonSerializer;
+import org.springframework.kafka.support.serializer.JacksonJsonDeserializer;
+import org.springframework.kafka.support.serializer.JacksonJsonSerializer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.kafka.ConfluentKafkaContainer;
@@ -36,7 +36,6 @@ import org.testcontainers.kafka.ConfluentKafkaContainer;
  * notification-service tarafındaki dinleyici tarafından doğru şekilde tüketilip
  * NotificationUseCase'e iletildiğini doğrular.
  */
-@SuppressWarnings("deprecation")
 @Testcontainers
 class TaskCreatedEventKafkaIT {
 
@@ -53,7 +52,7 @@ class TaskCreatedEventKafkaIT {
         Map.of(
             ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, KAFKA.getBootstrapServers(),
             ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class,
-            ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, JsonSerializer.class);
+            ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, JacksonJsonSerializer.class);
     producerTemplate = new KafkaTemplate<>(new DefaultKafkaProducerFactory<>(producerProps));
 
     Map<String, Object> consumerProps =
@@ -67,12 +66,12 @@ class TaskCreatedEventKafkaIT {
             ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG,
             StringDeserializer.class,
             ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG,
-            JsonDeserializer.class,
-            JsonDeserializer.TRUSTED_PACKAGES,
+            JacksonJsonDeserializer.class,
+            JacksonJsonDeserializer.TRUSTED_PACKAGES,
             "com.k8sspringmicroservices.common.event",
-            JsonDeserializer.VALUE_DEFAULT_TYPE,
+            JacksonJsonDeserializer.VALUE_DEFAULT_TYPE,
             TaskCreatedEvent.class.getName(),
-            JsonDeserializer.USE_TYPE_INFO_HEADERS,
+            JacksonJsonDeserializer.USE_TYPE_INFO_HEADERS,
             false);
 
     DefaultKafkaConsumerFactory<String, TaskCreatedEvent> consumerFactory =
@@ -95,8 +94,8 @@ class TaskCreatedEventKafkaIT {
     AtomicReference<TaskCreatedEvent> received = new AtomicReference<>();
 
     MessageListener<String, TaskCreatedEvent> messageListener =
-        record -> {
-          TaskCreatedEvent event = record.value();
+        consumerRecord -> {
+          TaskCreatedEvent event = consumerRecord.value();
           received.set(event);
           notificationUseCase.handleTaskCreated(event);
         };
