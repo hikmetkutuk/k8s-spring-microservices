@@ -1,0 +1,190 @@
+rule_files:
+- alerts.yaml
+evaluation_interval: 1m
+tests:
+- name: TaskOutboxBacklog
+  interval: 1m
+  input_series:
+  - series: task_outbox_pending{namespace="microservices",application="task-service",pod="a"}
+    values: 101+0x10
+  - series: task_outbox_pending{namespace="microservices",application="task-service",pod="b"}
+    values: 101+0x10
+  alert_rule_test:
+  - eval_time: 4m
+    alertname: TaskOutboxBacklog
+    exp_alerts: []
+  - eval_time: 5m
+    alertname: TaskOutboxBacklog
+    exp_alerts:
+    - exp_labels:
+        namespace: microservices
+        application: task-service
+        severity: warning
+      exp_annotations:
+        summary: Task outbox has more than 100 pending events
+- name: TaskOutboxOldestEvent
+  interval: 1m
+  input_series:
+  - series: task_outbox_oldest_age_seconds{namespace="microservices",application="task-service"}
+    values: 301+0x10
+  alert_rule_test:
+  - eval_time: 1m
+    alertname: TaskOutboxOldestEvent
+    exp_alerts: []
+  - eval_time: 2m
+    alertname: TaskOutboxOldestEvent
+    exp_alerts:
+    - exp_labels:
+        namespace: microservices
+        application: task-service
+        severity: critical
+      exp_annotations:
+        summary: Task outbox delivery is delayed by more than five minutes
+- name: TaskOutboxPublishFailures
+  interval: 1m
+  input_series:
+  - series: task_outbox_publish_failures_total{namespace="microservices",application="task-service"}
+    values: 0+1x10
+  alert_rule_test:
+  - eval_time: 1m
+    alertname: TaskOutboxPublishFailures
+    exp_alerts: []
+  - eval_time: 3m
+    alertname: TaskOutboxPublishFailures
+    exp_alerts:
+    - exp_labels:
+        namespace: microservices
+        application: task-service
+        severity: warning
+      exp_annotations:
+        summary: Task outbox Kafka publication attempts are failing
+- name: MicroserviceUnavailable
+  interval: 1m
+  input_series:
+  - series: kube_deployment_status_replicas_available{namespace="microservices",deployment="task-service"}
+    values: 0+0x10
+  alert_rule_test:
+  - eval_time: 1m
+    alertname: MicroserviceUnavailable
+    exp_alerts: []
+  - eval_time: 2m
+    alertname: MicroserviceUnavailable
+    exp_alerts:
+    - exp_labels:
+        namespace: microservices
+        deployment: task-service
+        severity: critical
+      exp_annotations:
+        summary: Microservice has no available replicas
+- name: MicroserviceScrapeFailed
+  interval: 1m
+  input_series:
+  - series: up{namespace="microservices",app_kubernetes_io_name="task-service",job="kubernetes-pods"}
+    values: 0+0x10
+  alert_rule_test:
+  - eval_time: 1m
+    alertname: MicroserviceScrapeFailed
+    exp_alerts: []
+  - eval_time: 2m
+    alertname: MicroserviceScrapeFailed
+    exp_alerts:
+    - exp_labels:
+        namespace: microservices
+        app_kubernetes_io_name: task-service
+        severity: warning
+      exp_annotations:
+        summary: Prometheus cannot scrape any replica of a microservice
+- name: MicroserviceHighErrorRate
+  interval: 1m
+  input_series:
+  - series: http_server_requests_seconds_count{namespace="microservices",application="task-service",status="500",uri="/tasks/me"}
+    values: 0+10x15
+  - series: http_server_requests_seconds_count{namespace="microservices",application="task-service",status="200",uri="/tasks/me"}
+    values: 0+90x15
+  alert_rule_test:
+  - eval_time: 4m
+    alertname: MicroserviceHighErrorRate
+    exp_alerts: []
+  - eval_time: 7m
+    alertname: MicroserviceHighErrorRate
+    exp_alerts:
+    - exp_labels:
+        namespace: microservices
+        application: task-service
+        severity: warning
+      exp_annotations:
+        summary: More than five percent of HTTP requests fail with 5xx
+- name: MicroserviceHighLatency
+  interval: 1m
+  input_series:
+  - series: http_server_requests_seconds_count{namespace="microservices",application="task-service",uri="/tasks/me"}
+    values: 0+100x15
+  - series: http_server_requests_seconds_bucket{namespace="microservices",application="task-service",uri="/tasks/me",le="1"}
+    values: 0+50x15
+  - series: http_server_requests_seconds_bucket{namespace="microservices",application="task-service",uri="/tasks/me",le="5"}
+    values: 0+100x15
+  - series: http_server_requests_seconds_bucket{namespace="microservices",application="task-service",uri="/tasks/me",le="+Inf"}
+    values: 0+100x15
+  alert_rule_test:
+  - eval_time: 4m
+    alertname: MicroserviceHighLatency
+    exp_alerts: []
+  - eval_time: 7m
+    alertname: MicroserviceHighLatency
+    exp_alerts:
+    - exp_labels:
+        namespace: microservices
+        application: task-service
+        severity: warning
+      exp_annotations:
+        summary: HTTP p99 latency exceeds two seconds
+- name: healthy replicas and shared backlog do not cause false alarms
+  interval: 1m
+  input_series:
+  - series: task_outbox_pending{namespace="microservices",application="task-service",pod="a"}
+    values: 60+0x15
+  - series: task_outbox_pending{namespace="microservices",application="task-service",pod="b"}
+    values: 60+0x15
+  - series: task_outbox_oldest_age_seconds{namespace="microservices",application="task-service"}
+    values: 0+0x15
+  - series: task_outbox_publish_failures_total{namespace="microservices",application="task-service"}
+    values: 0+0x15
+  - series: up{namespace="microservices",app_kubernetes_io_name="task-service",job="kubernetes-pods",pod="a"}
+    values: 0+0x15
+  - series: up{namespace="microservices",app_kubernetes_io_name="task-service",job="kubernetes-pods",pod="b"}
+    values: 1+0x15
+  - series: kube_deployment_status_replicas_available{namespace="microservices",deployment="task-service"}
+    values: 1+0x15
+  - series: http_server_requests_seconds_count{namespace="microservices",application="task-service",status="500",uri="/tasks/me"}
+    values: 0+1x15
+  alert_rule_test:
+  - eval_time: 10m
+    alertname: TaskOutboxBacklog
+    exp_alerts: []
+  - eval_time: 10m
+    alertname: TaskOutboxOldestEvent
+    exp_alerts: []
+  - eval_time: 10m
+    alertname: TaskOutboxPublishFailures
+    exp_alerts: []
+  - eval_time: 10m
+    alertname: MicroserviceUnavailable
+    exp_alerts: []
+  - eval_time: 10m
+    alertname: MicroserviceScrapeFailed
+    exp_alerts: []
+  - eval_time: 10m
+    alertname: MicroserviceHighErrorRate
+    exp_alerts: []
+  - eval_time: 10m
+    alertname: MicroserviceHighLatency
+    exp_alerts: []
+- name: outbox alarm resolves after recovery
+  interval: 1m
+  input_series:
+  - series: task_outbox_pending{namespace="microservices",application="task-service"}
+    values: 101+0x6 0+0x10
+  alert_rule_test:
+  - eval_time: 8m
+    alertname: TaskOutboxBacklog
+    exp_alerts: []

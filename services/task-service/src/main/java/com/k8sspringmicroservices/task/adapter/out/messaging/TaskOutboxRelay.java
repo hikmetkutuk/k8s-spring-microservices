@@ -2,6 +2,8 @@ package com.k8sspringmicroservices.task.adapter.out.messaging;
 
 import com.k8sspringmicroservices.common.event.TaskCreatedEvent;
 import com.k8sspringmicroservices.task.application.port.out.TaskEventPublisherPort;
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.MeterRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -19,11 +21,13 @@ public class TaskOutboxRelay {
   private final TransactionTemplate transaction;
   private final int batchSize;
   private final int retryDelaySeconds;
+  private final Counter publishFailures;
 
   public TaskOutboxRelay(
       JdbcTemplate jdbc,
       TaskEventPublisherPort publisher,
       PlatformTransactionManager transactionManager,
+      MeterRegistry registry,
       @Value("${outbox.batch-size:20}") int batchSize,
       @Value("${outbox.retry-delay-seconds:30}") int retryDelaySeconds) {
     if (batchSize < 1 || retryDelaySeconds < 1) {
@@ -34,6 +38,10 @@ public class TaskOutboxRelay {
     this.transaction = new TransactionTemplate(transactionManager);
     this.batchSize = batchSize;
     this.retryDelaySeconds = retryDelaySeconds;
+    this.publishFailures =
+        Counter.builder("task.outbox.publish.failures")
+            .description("Failed Kafka publication attempts, including retries")
+            .register(registry);
   }
 
   @Scheduled(fixedDelayString = "${outbox.poll-interval-ms:1000}")
@@ -68,6 +76,7 @@ public class TaskOutboxRelay {
     try {
       publisher.publishTaskCreated(event);
     } catch (Exception ex) {
+      publishFailures.increment();
       jdbc.update(
           """
           UPDATE outbox_events SET attempts = attempts + 1,

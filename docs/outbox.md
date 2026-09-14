@@ -23,6 +23,7 @@ There is no global delivery ordering guarantee.
 
 Successful rows are deleted, so the table represents pending delivery only.
 Monitor the pending count, oldest `created_at`, and `attempts` for backlog growth.
+Metrics, alert thresholds, and verification are documented in [alerting.md](alerting.md).
 Kafka producer blocking is bounded to 5 seconds and acknowledgement waiting to
 10 seconds; database row locks are held during publication.
 

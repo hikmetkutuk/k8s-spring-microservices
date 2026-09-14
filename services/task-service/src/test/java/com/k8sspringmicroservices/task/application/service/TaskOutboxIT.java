@@ -47,12 +47,15 @@ class TaskOutboxIT {
   @Autowired PlatformTransactionManager manager;
   @MockitoBean CatalogItemPort catalog;
   private TaskEventPublisherPort publisher;
+  private io.micrometer.core.instrument.simple.SimpleMeterRegistry registry;
 
   @BeforeEach
   void setUp() {
     jdbc.update("DELETE FROM outbox_events");
     jdbc.update("DELETE FROM tasks");
     publisher = mock(TaskEventPublisherPort.class);
+    registry = new io.micrometer.core.instrument.simple.SimpleMeterRegistry();
+    new TaskOutboxMetrics(jdbc).bindTo(registry);
   }
 
   @Test
@@ -101,6 +104,7 @@ class TaskOutboxIT {
         .when(publisher)
         .publishTaskCreated(any());
     relay().publishPending();
+    assertThat(registry.get("task.outbox.publish.failures").counter().count()).isEqualTo(1);
     assertThat(jdbc.queryForObject("SELECT attempts FROM outbox_events", Integer.class))
         .isEqualTo(1);
     relay().publishPending();
@@ -113,7 +117,22 @@ class TaskOutboxIT {
   }
 
   private TaskOutboxRelay relay() {
-    return new TaskOutboxRelay(jdbc, publisher, manager, 20, 30);
+    return new TaskOutboxRelay(jdbc, publisher, manager, registry, 20, 30);
+  }
+
+  @Test
+  void gaugesReflectBacklogAndReturnToZeroAfterDelivery() {
+    var pending = registry.get("task.outbox.pending").gauge();
+    var age = registry.get("task.outbox.oldest.age").gauge();
+    assertThat(pending.value()).isZero();
+    assertThat(age.value()).isZero();
+    service.create("owner", "catalog", "title", null, 1);
+    jdbc.update("UPDATE outbox_events SET created_at = CURRENT_TIMESTAMP - INTERVAL '10 minutes'");
+    assertThat(pending.value()).isEqualTo(1);
+    assertThat(age.value()).isBetween(600.0, 610.0);
+    relay().publishPending();
+    assertThat(pending.value()).isZero();
+    assertThat(age.value()).isZero();
   }
 
   @Test
