@@ -48,3 +48,11 @@ jwt:
 podDisruptionBudget:
   enabled: false
   minAvailable: 1
+
+# Graceful shutdown bütçesi (detaylı gerekçe: helm/charts/common/templates/_helpers.tpl).
+# Bu serviste iki kapanma fazı var (Kafka listener container'ı + web server), bu yüzden
+# faz başına 20s'lik sınır en kötü durumda 40s'ye kadar çıkabilir. 60s marj bırakır;
+# düşürülürse işlenmekte olan Kafka batch'i SIGKILL ile yarıda kesilebilir.
+gracefulShutdown:
+  preStopSleepSeconds: 5
+  terminationGracePeriodSeconds: 60

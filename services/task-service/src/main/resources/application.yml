@@ -1,9 +1,22 @@
 server:
   port: 8084
+  shutdown: graceful
 
 spring:
   application:
     name: task-service
+  lifecycle:
+    timeout-per-shutdown-phase: ${SHUTDOWN_PHASE_TIMEOUT:20s}
+  task:
+    scheduling:
+      shutdown:
+        # OutboxRelay @Scheduled ile çalışıyor. Bu ayar olmadan pod kapanırken
+        # devam eden bir relay turu yarıda kesilir; batch'teki event'ler Kafka'ya
+        # gitmiş ama outbox'ta "published" işaretlenmemiş olabilir (bir sonraki
+        # açılışta tekrar yayınlanır — notification-service idempotent olduğu için
+        # veri bozulmaz, yine de gereksiz duplicate üretir).
+        await-termination: true
+        await-termination-period: ${SCHEDULER_AWAIT_TERMINATION:15s}
   # Spring Cloud 2025.0.0'ın discovery autoconfiguration'ı (OpenFeign'in getirdiği
   # spring-cloud-commons transitive'i), Boot 4.1.0'da taşınmış eski
   # `org.springframework.boot.autoconfigure.web.ServerProperties` paketine reflection ile
@@ -18,6 +31,19 @@ spring:
     url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:task_service}
     username: ${DB_USERNAME:task_service}
     password: ${DB_PASSWORD:task_service}
+    # Havuz boyutlandırma gerekçesi için bkz. auth-service/application.yml —
+    # 5 servis aynı PostgreSQL instance'ını paylaşıyor. Bu serviste HTTP isteklerine
+    # ek olarak outbox relay de havuzdan bağlantı aldığı için minimum-idle 1 fazla.
+    hikari:
+      pool-name: ${spring.application.name}-hikari
+      maximum-pool-size: ${DB_POOL_MAX_SIZE:10}
+      minimum-idle: ${DB_POOL_MIN_IDLE:3}
+      connection-timeout: ${DB_POOL_CONNECTION_TIMEOUT_MS:3000}
+      validation-timeout: ${DB_POOL_VALIDATION_TIMEOUT_MS:2000}
+      idle-timeout: ${DB_POOL_IDLE_TIMEOUT_MS:600000}
+      max-lifetime: ${DB_POOL_MAX_LIFETIME_MS:1800000}
+      keepalive-time: ${DB_POOL_KEEPALIVE_MS:300000}
+      leak-detection-threshold: ${DB_POOL_LEAK_DETECTION_MS:30000}
   jpa:
     hibernate:
       ddl-auto: validate

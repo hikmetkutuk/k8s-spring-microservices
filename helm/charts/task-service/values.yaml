@@ -49,3 +49,10 @@ jwt:
 podDisruptionBudget:
   enabled: false
   minAvailable: 1
+
+# Graceful shutdown bütçesi (detaylı gerekçe: helm/charts/common/templates/_helpers.tpl).
+# Bu serviste web server'a ek olarak outbox relay scheduler'ı da kapanışta bekletiliyor
+# (spring.task.scheduling.shutdown.await-termination-period, 15s), bu yüzden 60s.
+gracefulShutdown:
+  preStopSleepSeconds: 5
+  terminationGracePeriodSeconds: 60

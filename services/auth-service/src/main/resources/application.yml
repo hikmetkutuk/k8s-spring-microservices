@@ -1,13 +1,35 @@
 server:
   port: 8081
+  shutdown: graceful
 
 spring:
   application:
     name: auth-service
+  lifecycle:
+    timeout-per-shutdown-phase: ${SHUTDOWN_PHASE_TIMEOUT:20s}
   datasource:
     url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:auth_service}
     username: ${DB_USERNAME:auth_service}
     password: ${DB_PASSWORD:auth_service}
+    hikari:
+      pool-name: ${spring.application.name}-hikari
+      # 5 servis tek bir PostgreSQL instance'ını paylaşıyor ve infra chart'ında
+      # max_connections ayarlanmadığı için Postgres varsayılanı (100, 3'ü superuser'a
+      # rezerve) geçerli. 5 × 10 = 50 bağlantı, replicaCount=1 ile güvenli aralıkta.
+      # HPA devreye girince (madde 25) bu çarpan replica sayısıyla büyür — o noktada
+      # ya pool küçültülmeli ya Postgres max_connections artırılmalı ya da PgBouncer eklenmeli.
+      maximum-pool-size: ${DB_POOL_MAX_SIZE:10}
+      # Varsayılanda minimum-idle = maximum-pool-size olur ve havuz hiç küçülmez.
+      # Paylaşılan Postgres'te boşta duran bağlantıları geri vermek için düşük tutuluyor.
+      minimum-idle: ${DB_POOL_MIN_IDLE:2}
+      # Varsayılan 30s; havuz tükendiğinde istek 30s asılı kalmak yerine hızlı hata versin.
+      connection-timeout: ${DB_POOL_CONNECTION_TIMEOUT_MS:3000}
+      validation-timeout: ${DB_POOL_VALIDATION_TIMEOUT_MS:2000}
+      idle-timeout: ${DB_POOL_IDLE_TIMEOUT_MS:600000}
+      max-lifetime: ${DB_POOL_MAX_LIFETIME_MS:1800000}
+      keepalive-time: ${DB_POOL_KEEPALIVE_MS:300000}
+      # Kapatılmayan bağlantıları (eşik aşılınca) stack trace ile loglar.
+      leak-detection-threshold: ${DB_POOL_LEAK_DETECTION_MS:30000}
   jpa:
     hibernate:
       ddl-auto: validate

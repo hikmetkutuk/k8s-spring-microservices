@@ -58,3 +58,8 @@ jwtKeys:
 podDisruptionBudget:
   enabled: false
   minAvailable: 1
+
+# Graceful shutdown bütçesi (detaylı gerekçe: helm/charts/common/templates/_helpers.tpl).
+gracefulShutdown:
+  preStopSleepSeconds: 5
+  terminationGracePeriodSeconds: 60

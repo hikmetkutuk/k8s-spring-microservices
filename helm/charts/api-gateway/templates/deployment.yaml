@@ -17,6 +17,7 @@ spec:
         {{- include "common.podAnnotations" . | nindent 8 }}
         checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
     spec:
+      {{- include "common.terminationGracePeriod" . | nindent 6 }}
       securityContext:
         runAsNonRoot: true
         runAsUser: 1000
@@ -51,6 +52,7 @@ spec:
             periodSeconds: 15
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
+          {{- include "common.preStopHook" . | nindent 10 }}
       volumes:
         - name: jwt-public-key
           secret:

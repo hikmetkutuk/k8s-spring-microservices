@@ -42,3 +42,14 @@ jwt:
 podDisruptionBudget:
   enabled: false
   minAvailable: 1
+
+# Graceful shutdown bütçesi (detaylı gerekçe: helm/charts/common/templates/_helpers.tpl).
+# preStopSleepSeconds: SIGTERM öncesi bekleme — pod'un Service endpoint'lerinden
+#   düşürülmesinin uygulamanın kapanmaya başlamasından önce yayılmasını sağlar.
+# terminationGracePeriodSeconds: preStop + uygulama kapanışının tamamı için üst sınır.
+#   Uygulamadaki spring.lifecycle.timeout-per-shutdown-phase (20s) faz BAŞINA geçerli
+#   olduğu için birden fazla fazı olan servislerde toplam bunun katı olabilir; 60s
+#   preStop(5) + en kötü iki faz(40) üzerine marj bırakır.
+gracefulShutdown:
+  preStopSleepSeconds: 5
+  terminationGracePeriodSeconds: 60

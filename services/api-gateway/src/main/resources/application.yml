@@ -1,9 +1,17 @@
 server:
   port: 8080
+  # Pod silinirken Netty yeni bağlantı kabul etmeyi durdurur ama devam eden istekleri
+  # tamamlar. K8s tarafında terminationGracePeriodSeconds bu süreden büyük olmalı
+  # (bkz. helm/charts/api-gateway/values.yaml → gracefulShutdown).
+  shutdown: graceful
 
 spring:
   application:
     name: api-gateway
+  lifecycle:
+    # SmartLifecycle fazı başına bekleme üst sınırı. Gateway'de tek faz (web server) var,
+    # yine de terminationGracePeriodSeconds hesabında faz başına ayrılan bütçe budur.
+    timeout-per-shutdown-phase: ${SHUTDOWN_PHASE_TIMEOUT:20s}
   main:
     web-application-type: reactive
   # libs:common'daki servlet/MVC tabanlı auto-configuration'lar (GlobalExceptionHandler,
