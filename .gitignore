@@ -25,6 +25,7 @@ gradle-app.setting
 .classpath
 bin/
 out/
+!**/src/**/out/
 
 # OS
 .DS_Store

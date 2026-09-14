@@ -28,6 +28,15 @@ spring:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
       acks: all
+      properties:
+        max.block.ms: 5000
+        delivery.timeout.ms: 10000
+        request.timeout.ms: 5000
+
+outbox:
+  poll-interval-ms: ${OUTBOX_POLL_INTERVAL_MS:1000}
+  batch-size: ${OUTBOX_BATCH_SIZE:20}
+  retry-delay-seconds: ${OUTBOX_RETRY_DELAY_SECONDS:30}
 
 jwt:
   public-key-location: ${JWT_PUBLIC_KEY_LOCATION:classpath:keys/public_key.pem}
