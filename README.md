@@ -25,13 +25,18 @@ kurulum gerekmez.
 
 ### 2. Git hook'ları
 
-Commit öncesi otomatik kod formatlama (Spotless) için hook'u kurun:
+Commit öncesi kod formatını kontrol eden (Spotless) hook'u kurun:
 
 ```
 ./gradlew installGitHooks
 ```
 
-Repo'yu her klonladığınızda bir kere çalıştırmanız yeterli.
+Repo'yu her klonladığınızda ve hook değiştiğinde çalıştırın.
+
+Hook `spotlessCheck` çalıştırır; dosyaları formatlamaz ve stage içeriğini değiştirmez.
+Kontrol tüm çalışma ağacını kapsar; stage edilmemiş Java değişikliklerindeki format
+hataları da commit'i engelleyebilir. Format hatasında `./gradlew spotlessApply`
+çalıştırın, değişiklikleri inceleyin ve commit'e girecek içeriği yeniden stage edin.
 
 ### 3. `google-java-format` / JDK uyumsuzluğu (sadece bazı makinelerde)
 

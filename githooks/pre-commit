@@ -1,12 +1,10 @@
 #!/bin/sh
-# Java kodunu commit öncesi otomatik formatlar (Spotless) ve formatlanan dosyaları stage'e ekler.
+# Commit öncesi formatı kontrol eder; dosyaları ve stage içeriğini değiştirmez.
 
-./gradlew spotlessApply -q
-if [ $? -ne 0 ]; then
-    echo "Spotless formatlama başarısız oldu, commit iptal edildi."
+if ! ./gradlew spotlessCheck -q; then
+    echo "Spotless kontrolü başarısız oldu, commit iptal edildi."
+    echo "Format hataları için ./gradlew spotlessApply çalıştırın, değişiklikleri inceleyip commit'e girecek içeriği yeniden stage edin."
     exit 1
 fi
-
-git diff --name-only --diff-filter=ACM | grep '\.java$' | xargs -I{} git add {} 2>/dev/null
 
 exit 0
